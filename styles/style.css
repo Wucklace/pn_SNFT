@@ -5,10 +5,10 @@
     box-sizing: border-box;
     font-family: Arial, sans-serif;
     color: #000; /* Black text */
-  }
-  
-  /* Style the dapp-screen */
-  .dapp-screen {
+}
+
+/* Style the dapp-screen */
+.dapp-screen {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
@@ -16,10 +16,10 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-  }
-  
-  /* Style the topbar */
-  .topbar {
+}
+
+/* Style the topbar */
+.topbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -27,84 +27,83 @@
     background-color: #fff;
     border-bottom: 1px solid #000;
     position: relative; /* For centering trade-section */
-  }
-  
-  /* Style the h1 inside the span */
-  .h1 h1 {
+}
+
+/* Style the h1 inside the span */
+.h1 h1 {
     font-size: 24px;
     font-weight: bold;
     margin: 0;
-  }
-  
-  /* Style the trade-section (centered) */
-  .trade-section {
+}
+
+/* Style the trade-section (centered) */
+.trade-section {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
     font-size: 16px;
     cursor: pointer;
     padding: 5px 15px;
-  }
-  
-  /* Style the wallet-icon */
-  .wallet-icon {
+}
+
+/* Style the wallet-icon */
+.wallet-icon {
     display: flex;
     align-items: center;
-  }
-  
-  /* Style the connect wallet button */
-  #connect-wallet {
+}
+
+/* Style the connect wallet button */
+#connect-wallet {
     display: flex;
     align-items: center;
     gap: 5px;
     font-size: 16px;
     padding: 5px 10px;
     cursor: pointer;
-  }
-  
-  #connect-wallet i {
+}
+
+#connect-wallet i {
     font-size: 16px;
     color: #000; /* Classic solid black for wallet icon */
-  }
-  
-  /* Hover effects */
-  .trade-section:hover,
-  #connect-wallet:hover {
+}
+
+/* Hover effects */
+.trade-section:hover,
+#connect-wallet:hover {
     background-color: #8d8888;
     color: #fdf7f7;
-  }
-  
-  /* Style the main-content */
-  .main-content {
+}
+
+/* Style the main-content */
+.main-content {
     flex-grow: 1; /* Takes available space above mint-box */
-  }
-  
-  /* Style the nft-mint-section */
-  .nft-mint-section {
+}
+
+/* Style the nft-mint-section */
+.nft-mint-section {
     display: flex;
     flex-direction: column;
     gap: 20px;
-  }
-  
-  /* Style the own-pnsnft section */
-  .own-pnsnft {
+}
+
+/* Style the own-pnsnft section */
+.own-pnsnft {
     text-align: center;
     padding: 30px;
     border: 1px solid #000;
     margin: 20px auto; /* Center the section */
-    /* Expands to fill space above fixed mint-box */
-    width: 300px; /* Reduced size to 250px */
-    background-color:  #bdb7b7; /* Light background */
-  }
-  
-  .own-pnsnft p {
+    width: 300px; /* Reduced size to 300px */
+    background-color: #bdb7b7; /* Light background */
+}
+
+.own-pnsnft p {
     font-size: 16px;
     margin: 0;
-    color:  #070707; /* Dark text */
-  }
-  
-  /* Style the mint-box (fixed position) */
-  .mint-box {
+    color: #070707; /* Dark text */
+}
+
+/* Style the mint-box (fixed position) */
+.mint-box {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -119,38 +118,37 @@
     transform: translateX(-50%);
     width: 90%;
     max-width: 400px;
-  }
-  
-  /* Style the mint-form */
-  .mint-form {
+}
+
+/* Style the mint-form */
+.mint-form {
     display: flex;
     flex-direction: column;
     gap: 10px;
     width: 100%;
-  }
-  
-  .mint-form label {
-    font-size: 18px;
-    color:  #8b8686;
+}
 
-  }
-  
-  .mint-form input {
+.mint-form label {
+    font-size: 18px;
+    color: #8b8686;
+}
+
+.mint-form input {
     padding: 8px;
     font-size: 16px;
     border: 1px solid #fff;
     border-radius: 5px;
     background-color: #fff;
     color: #000;
-  }
-  
-  .mint-form p {
+}
+
+.mint-form p {
     font-size: 16px;
-    color:  #080808;
-  }
-  
-  /* Style the mint button */
-  .mint-button {
+    color: #080808;
+}
+
+/* Style the mint button */
+.mint-button {
     padding: 10px 20px;
     font-size: 16px;
     background-color: #666; /* Gray button */
@@ -159,43 +157,137 @@
     border-radius: 5px;
     cursor: pointer;
     margin-top: 10px;
-  }
-  
-  .mint-button:hover {
+}
+
+.mint-button:hover {
     background-color: #000; /* Black on hover */
     color: #fff;
-  }
-  
-  /* Style the marketplace (hidden by default) */
-  .marketplace {
+}
+
+/* Style the marketplace (hidden by default) */
+.marketplace {
     padding: 20px;
     border: 1px solid #000;
-    margin: 20px ;
-  }
-  
-  .marketplace h2 {
+    margin: 20px;
+}
+
+.marketplace h2 {
     font-size: 20px;
     margin-bottom: 10px;
-  }
-  
-  #marketplace-listings {
+}
+
+#marketplace-listings {
     margin-bottom: 20px;
     width: 300px;
     padding: 30px;
-    background-color:  #bdb7b7; /* Light background */
+    background-color: #bdb7b7; /* Light background */
     border: 1px solid #000;
-  }
-  
-  .close-marketplace {
+}
+
+.close-marketplace {
     padding: 5px 15px;
     font-size: 14px;
     background-color: #fff;
     border: 1px solid #000;
     border-radius: 5px;
     cursor: pointer;
-  }
-  
-  .close-marketplace:hover {
+}
+
+.close-marketplace:hover {
     background-color: #000;
     color: #fff;
-  }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+    /* Adjust dapp-screen padding */
+    .dapp-screen {
+        padding: 10px;
+    }
+
+    /* Adjust topbar for mobile */
+    .topbar {
+        flex-direction: column;
+        gap: 10px;
+        padding: 15px;
+    }
+
+    /* Remove absolute positioning for trade-section on mobile */
+    .trade-section {
+        position: static;
+        transform: none;
+        font-size: 14px;
+        padding: 5px 10px;
+    }
+
+    /* Adjust h1 font size */
+    .h1 h1 {
+        font-size: 20px;
+    }
+
+    /* Adjust wallet button */
+    #connect-wallet {
+        font-size: 14px;
+        padding: 5px 8px;
+    }
+
+    #connect-wallet i {
+        font-size: 14px;
+    }
+
+    /* Adjust own-pnsnft for mobile */
+    .own-pnsnft {
+        width: 90%; /* Use more screen width */
+        padding: 20px;
+    }
+
+    .own-pnsnft p {
+        font-size: 14px;
+    }
+
+    /* Adjust mint-box for mobile */
+    .mint-box {
+        width: 95%;
+        max-width: 350px;
+        bottom: 10px;
+        padding: 15px;
+    }
+
+    .mint-form label {
+        font-size: 16px;
+    }
+
+    .mint-form input {
+        font-size: 14px;
+        padding: 6px;
+    }
+
+    .mint-form p {
+        font-size: 14px;
+    }
+
+    .mint-button {
+        font-size: 14px;
+        padding: 8px 15px;
+    }
+
+    /* Adjust marketplace for mobile */
+    .marketplace {
+        margin: 10px;
+        padding: 15px;
+    }
+
+    .marketplace h2 {
+        font-size: 18px;
+    }
+
+    #marketplace-listings {
+        width: 90%; /* Use more screen width */
+        padding: 20px;
+    }
+
+    .close-marketplace {
+        font-size: 12px;
+        padding: 5px 10px;
+    }
+}
