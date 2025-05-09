@@ -1,13 +1,17 @@
 // Description: This script connects to a smart contract on the Ethereum blockchain using Web3.js.
 // It allows users to mint NFTs, view their owned NFTs, and interact with a marketplace for buying and selling NFTs.
+
 // Initialize Web3
 let web3;
 let contract;
 let account;
 let mintFee;
 
+// Replace with your contract's network ID (e.g., Sepolia is 11155111, Mainnet is 1)
+const EXPECTED_NETWORK_ID = "11155111"; // Adjust based on your contract's deployment network
+
 const contractAddress = "0x41cedE54cbC999Cdec9e93686029df3A5e74A737"; // Replace with your contract address
-const contractABI = [
+const contractABI =  [
   {"inputs":[],"stateMutability":"nonpayable","type":"constructor"},
   {"inputs":[{"internalType":"address","name":"sender","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"},{"internalType":"address","name":"owner","type":"address"}],"name":"ERC721IncorrectOwner","type":"error"},
   {"inputs":[{"internalType":"address","name":"operator","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"ERC721InsufficientApproval","type":"error"},
@@ -72,22 +76,30 @@ const contractABI = [
   {"inputs":[],"name":"withdrawFunds","outputs":[],"stateMutability":"nonpayable","type":"function"}
 ];
 
+async function checkNetwork() {
+  const networkId = await web3.eth.net.getId();
+  if (networkId != EXPECTED_NETWORK_ID) {
+    throw new Error(`Please switch to the correct network (ID: ${EXPECTED_NETWORK_ID}). Current network ID: ${networkId}`);
+  }
+}
+
 async function initWeb3() {
   if (window.ethereum) {
     web3 = new Web3(window.ethereum);
     try {
+      // Check network
+      await checkNetwork();
+
       // Check if account is stored in localStorage
       const storedAccount = localStorage.getItem('connectedAccount');
       let storedSignature = localStorage.getItem('walletSignature');
       if (storedAccount && storedSignature) {
         account = storedAccount;
-        // Verify signature with tolerance for timestamp difference
         const originalMessage = localStorage.getItem('signatureMessage') || `PNSNFT Ownership Proof for ${storedAccount} at ${Date.now()}`;
         const recoveredAddress = web3.eth.accounts.recover(originalMessage, storedSignature);
         if (recoveredAddress.toLowerCase() === storedAccount.toLowerCase()) {
           console.log("Signature verified, restoring connection.");
         } else {
-          // Retry with fresh sign if verification fails
           await requestNewSignature();
         }
       } else {
@@ -122,7 +134,7 @@ async function initWeb3() {
 
 async function requestNewSignature() {
   const message = `PNSNFT Ownership Proof for ${account} at ${Date.now()}`;
-  const signature = await web3.eth.personal.sign(message, account, ""); // Empty password for MetaMask
+  const signature = await web3.eth.personal.sign(message, account, "");
   localStorage.setItem('connectedAccount', account);
   localStorage.setItem('walletSignature', signature);
   localStorage.setItem('signatureMessage', message);
@@ -176,7 +188,6 @@ async function displayOwnedNFT() {
         <p>Name: ${pnsName}</p>
         ${listing.price > 0 ? `<p>Listed for: ${web3.utils.fromWei(listing.price, "ether")} NEX</p><button class="unlist-button" data-tokenid="${tokenId}">Unlist</button>` : `<button class="list-button" data-tokenid="${tokenId}">List for Sale</button>`}
       `;
-      // Add event listeners
       if (listing.price > 0) {
         document.querySelector(".unlist-button").addEventListener("click", async (e) => {
           const tokenId = e.target.dataset.tokenid;
@@ -218,7 +229,7 @@ async function displayOwnedNFT() {
   }
 }
 
-// Mint NFT
+// Mint NFT with improved error handling
 document.getElementById("mint-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!account) {
@@ -233,6 +244,9 @@ document.getElementById("mint-form").addEventListener("submit", async (e) => {
   }
 
   try {
+    // Check network
+    await checkNetwork();
+
     const balance = await contract.methods.balanceOf(account).call();
     if (balance > 0) {
       alert("This wallet already owns an NFT. Only one NFT per wallet is allowed.");
@@ -252,14 +266,24 @@ document.getElementById("mint-form").addEventListener("submit", async (e) => {
       return;
     }
 
-    const gasEstimate = await contract.methods.mint(username).estimateGas({ from: account, value: mintFee });
-    console.log("Estimated gas:", gasEstimate);
+    // Estimate gas with a fallback
+    let gasEstimate;
+    try {
+      gasEstimate = await contract.methods.mint(username).estimateGas({ from: account, value: mintFee });
+      console.log("Estimated gas:", gasEstimate);
+    } catch (error) {
+      console.error("Gas estimation failed:", error);
+      throw new Error("Gas estimation failed. The transaction might revert due to: username already taken, invalid username, or contract restriction.");
+    }
+
+    // Increase gas limit by 20% to avoid out-of-gas errors
+    const gasLimit = Math.floor(gasEstimate * 1.2);
 
     console.log(`Minting NFT with username: ${username}, MINT_FEE: ${mintFeeEth} NEX`);
     const tx = await contract.methods.mint(username).send({
       from: account,
       value: mintFee,
-      gas: gasEstimate
+      gas: gasLimit
     });
     console.log("Mint transaction successful:", tx);
     alert(`NFT minted successfully! Transaction hash: ${tx.transactionHash}`);
@@ -269,8 +293,10 @@ document.getElementById("mint-form").addEventListener("submit", async (e) => {
     let errorMessage = "Minting failed: ";
     if (error.message.includes("insufficient funds")) {
       errorMessage += "Insufficient funds for MINT_FEE and gas.";
-    } else if (error.message.includes("revert")) {
+    } else if (error.message.includes("revert") || error.message.includes("Gas estimation failed")) {
       errorMessage += "Transaction reverted. Possible reasons: username already taken, invalid username, or contract restriction.";
+    } else if (error.message.includes("network")) {
+      errorMessage += error.message;
     } else {
       errorMessage += error.message;
     }
@@ -343,13 +369,47 @@ async function displayMarketplace() {
         const tokenId = e.target.dataset.tokenid;
         const price = e.target.dataset.price;
         try {
-          await contract.methods.buy(tokenId).send({ from: account, value: price });
+          // Check network
+          await checkNetwork();
+
+          const balanceWei = await web3.eth.getBalance(account);
+          const balanceEth = web3.utils.fromWei(balanceWei, "ether");
+          const priceEth = web3.utils.fromWei(price, "ether");
+          if (Number(balanceWei) < Number(price)) {
+            alert(`Insufficient funds! You need at least ${priceEth} NEX plus gas fees. Current balance: ${balanceEth} NEX.`);
+            return;
+          }
+
+          // Estimate gas with a fallback
+          let gasEstimate;
+          try {
+            gasEstimate = await contract.methods.buy(tokenId).estimateGas({ from: account, value: price });
+            console.log("Estimated gas for buy:", gasEstimate);
+          } catch (error) {
+            console.error("Gas estimation for buy failed:", error);
+            throw new Error("Gas estimation failed. The transaction might revert due to: NFT not listed, insufficient approval, or contract restriction.");
+          }
+
+          // Increase gas limit by 20% to avoid out-of-gas errors
+          const gasLimit = Math.floor(gasEstimate * 1.2);
+
+          await contract.methods.buy(tokenId).send({ from: account, value: price, gas: gasLimit });
           alert("NFT purchased successfully!");
           displayOwnedNFT();
           displayMarketplace();
         } catch (error) {
           console.error("Buying failed:", error);
-          alert("Buying failed: " + error.message);
+          let errorMessage = "Buying failed: ";
+          if (error.message.includes("insufficient funds")) {
+            errorMessage += "Insufficient funds for the NFT price and gas.";
+          } else if (error.message.includes("revert") || error.message.includes("Gas estimation failed")) {
+            errorMessage += "Transaction reverted. Possible reasons: NFT not listed, insufficient approval, or contract restriction.";
+          } else if (error.message.includes("network")) {
+            errorMessage += error.message;
+          } else {
+            errorMessage += error.message;
+          }
+          alert(errorMessage);
         }
       });
     });
@@ -381,7 +441,6 @@ window.addEventListener("load", () => {
   updateWalletUI();
   if (localStorage.getItem('connectedAccount')) {
     initWeb3().catch(() => {
-      // If init fails, clear storage but don't alert unless critical
       localStorage.removeItem('connectedAccount');
       localStorage.removeItem('walletSignature');
       localStorage.removeItem('signatureMessage');
