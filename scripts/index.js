@@ -81,26 +81,20 @@ async function initWeb3() {
       let storedSignature = localStorage.getItem('walletSignature');
       if (storedAccount && storedSignature) {
         account = storedAccount;
-        // Verify signature to ensure ownership
-        const message = `PNSNFT Ownership Proof for ${storedAccount} at ${Date.now()}`;
-        const recoveredAddress = web3.eth.accounts.recover(message, storedSignature);
+        // Verify signature with tolerance for timestamp difference
+        const originalMessage = localStorage.getItem('signatureMessage') || `PNSNFT Ownership Proof for ${storedAccount} at ${Date.now()}`;
+        const recoveredAddress = web3.eth.accounts.recover(originalMessage, storedSignature);
         if (recoveredAddress.toLowerCase() === storedAccount.toLowerCase()) {
           console.log("Signature verified, restoring connection.");
         } else {
-          localStorage.removeItem('connectedAccount');
-          localStorage.removeItem('walletSignature');
-          throw new Error("Signature verification failed.");
+          // Retry with fresh sign if verification fails
+          await requestNewSignature();
         }
       } else {
         await window.ethereum.request({ method: "eth_requestAccounts" });
         const accounts = await web3.eth.getAccounts();
         account = accounts[0];
-        // Generate and store signature
-        const message = `PNSNFT Ownership Proof for ${account} at ${Date.now()}`;
-        storedSignature = await web3.eth.personal.sign(message, account, ""); // Empty password for MetaMask
-        localStorage.setItem('connectedAccount', account);
-        localStorage.setItem('walletSignature', storedSignature);
-        console.log("Signature created:", storedSignature);
+        await requestNewSignature();
       }
       contract = new web3.eth.Contract(contractABI, contractAddress);
       mintFee = await contract.methods.MINT_FEE().call();
@@ -118,11 +112,21 @@ async function initWeb3() {
       account = null;
       localStorage.removeItem('connectedAccount');
       localStorage.removeItem('walletSignature');
+      localStorage.removeItem('signatureMessage');
       updateWalletUI();
     }
   } else {
     alert("Please install MetaMask!");
   }
+}
+
+async function requestNewSignature() {
+  const message = `PNSNFT Ownership Proof for ${account} at ${Date.now()}`;
+  const signature = await web3.eth.personal.sign(message, account, ""); // Empty password for MetaMask
+  localStorage.setItem('connectedAccount', account);
+  localStorage.setItem('walletSignature', signature);
+  localStorage.setItem('signatureMessage', message);
+  console.log("New signature created:", signature);
 }
 
 // Update wallet button
@@ -134,7 +138,7 @@ async function updateWalletUI() {
       if (balance > 0) {
         const pnsName = await contract.methods.lookupName(account).call();
         console.log("Wallet PNS Name:", pnsName);
-        connectButton.innerHTML = `<i class="fas fa-wallet"></i> ${pnsName} (Signed)`;
+        connectButton.innerHTML = `<i class="fas fa-wallet"></i> ${pnsName || account.slice(0, 6)}...${account.slice(-4)} (Signed)`;
       } else {
         connectButton.innerHTML = `<i class="fas fa-wallet"></i> ${account.slice(0, 6)}...${account.slice(-4)} (Signed)`;
       }
@@ -360,12 +364,15 @@ document.getElementById("connect-wallet").addEventListener("click", async () => 
   if (!account) {
     await initWeb3();
   } else {
-    account = null;
-    localStorage.removeItem('connectedAccount');
-    localStorage.removeItem('walletSignature');
-    updateWalletUI();
-    document.getElementById("own-pnsnft").innerHTML = `<p id="no-nft-message">Connect wallet to view owned NFT.</p>`;
-    document.getElementById("mint-fee-display").textContent = "Connect wallet to see mint fee.";
+    if (confirm("Are you sure you want to disconnect your wallet?")) {
+      account = null;
+      localStorage.removeItem('connectedAccount');
+      localStorage.removeItem('walletSignature');
+      localStorage.removeItem('signatureMessage');
+      updateWalletUI();
+      document.getElementById("own-pnsnft").innerHTML = `<p id="no-nft-message">Connect wallet to view owned NFT.</p>`;
+      document.getElementById("mint-fee-display").textContent = "Connect wallet to see mint fee.";
+    }
   }
 });
 
@@ -374,8 +381,11 @@ window.addEventListener("load", () => {
   updateWalletUI();
   if (localStorage.getItem('connectedAccount')) {
     initWeb3().catch(() => {
+      // If init fails, clear storage but don't alert unless critical
       localStorage.removeItem('connectedAccount');
       localStorage.removeItem('walletSignature');
+      localStorage.removeItem('signatureMessage');
+      updateWalletUI();
     });
   }
 });
