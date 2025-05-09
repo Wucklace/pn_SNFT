@@ -7,8 +7,8 @@ let contract;
 let account;
 let mintFee;
 
-// Replace with your contract's network ID (e.g., Sepolia is 11155111, Mainnet is 1)
-const EXPECTED_NETWORK_ID = "11155111"; // Adjust based on your contract's deployment network
+// Replace with your contract's network ID (e.g., Sepolia is 393, Mainnet is 1)
+const EXPECTED_NETWORK_ID = "393"; // Adjust based on your contract's deployment network
 
 const contractAddress = "0x41cedE54cbC999Cdec9e93686029df3A5e74A737"; // Replace with your contract address
 const contractABI =  [
